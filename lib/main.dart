@@ -16,7 +16,11 @@ void main() async {
   };
   // 🚨 CRITICAL: Device orientation lock - DO NOT REMOVE
   Future.wait([
-    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp])
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ])
   ]).then((value) {
     runApp(MyApp());
   });
