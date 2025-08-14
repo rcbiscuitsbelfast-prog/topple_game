@@ -27,26 +27,26 @@ jobs:
     - name: Fetch dependencies
       run: flutter pub get
 
-    - name: Create local.properties (point to Flutter SDK)
+    - name: Create local.properties (SDK paths)
       run: |
         echo "flutter.sdk=${FLUTTER_HOME:-$(dirname $(dirname $(which flutter)))}" > android/local.properties
         echo "sdk.dir=${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}" >> android/local.properties
 
-    - name: Install Gradle CLI
-      run: sudo apt-get update && sudo apt-get install -y gradle
-
-    - name: Generate Gradle wrapper
+    - name: Install system Gradle 8.2.1
       run: |
-        cd android
-        gradle wrapper --gradle-version 8.2.1
+        sudo apt-get update
+        sudo apt-get install -y unzip
+        GRADLE_VERSION=8.2.1
+        curl -sL https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip -o gradle.zip
+        sudo mkdir -p /opt/gradle
+        sudo unzip -q gradle.zip -d /opt/gradle
+        rm gradle.zip
+        echo "GRADLE_HOME=/opt/gradle/gradle-${GRADLE_VERSION}" >> $GITHUB_ENV
+        echo "/opt/gradle/gradle-${GRADLE_VERSION}/bin" >> $GITHUB_PATH
+        gradle -v
 
-    - name: Make gradlew executable
-      run: chmod +x android/gradlew
-
-    - name: Build Android (debug) with Gradle wrapper
-      run: |
-        cd android
-        ./gradlew assembleDebug --no-daemon --stacktrace
+    - name: Build Android (debug) with system Gradle
+      run: gradle -p android assembleDebug --no-daemon --stacktrace
 
     - name: Upload APK artifact
       uses: actions/upload-artifact@v4
