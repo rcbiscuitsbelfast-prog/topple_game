@@ -5,22 +5,59 @@ on:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
+  workflow_dispatch:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v4
-    - name: set up JDK 11
+
+    - name: Set up Java 17
       uses: actions/setup-java@v4
       with:
-        java-version: '11'
+        java-version: '17'
         distribution: 'temurin'
-        cache: gradle
 
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
-    - name: Build with Gradle
-      run: ./gradlew build
+    - name: Set up Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.27.4'
+        channel: 'stable'
+        cache: true
+
+    - name: Fetch dependencies
+      run: flutter pub get
+
+    - name: Create local.properties (SDK paths)
+      run: |
+        echo "flutter.sdk=${FLUTTER_HOME:-$(dirname $(dirname $(which flutter)))}" > android/local.properties
+        echo "sdk.dir=${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}" >> android/local.properties
+
+    - name: Build Android (debug) with Flutter
+      run: flutter build apk --debug
+
+    - name: Verify APK exists
+      run: |
+        test -f build/app/outputs/flutter-apk/app-debug.apk
+        ls -lh build/app/outputs/flutter-apk/app-debug.apk
+
+    - name: Upload Debug APK artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-debug-apk
+        path: build/app/outputs/flutter-apk/app-debug.apk
+
+    - name: Build Android (release) with Flutter
+      run: flutter build apk --release
+
+    - name: Verify release APK exists
+      run: |
+        test -f build/app/outputs/flutter-apk/app-release.apk
+        ls -lh build/app/outputs/flutter-apk/app-release.apk
+
+    - name: Upload Release APK artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-release-apk
+        path: build/app/outputs/flutter-apk/app-release.apk
