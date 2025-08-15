@@ -1,4 +1,4 @@
-name: Android CI
+name: Android CI (Flutter)
 
 on:
   push:
@@ -26,7 +26,7 @@ jobs:
         channel: 'stable'
         cache: true
 
-    - name: Fetch dependencies
+    - name: Install dependencies
       run: flutter pub get
 
     - name: Create local.properties (SDK paths)
@@ -34,21 +34,7 @@ jobs:
         echo "flutter.sdk=${FLUTTER_HOME:-$(dirname $(dirname $(which flutter)))}" > android/local.properties
         echo "sdk.dir=${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}" >> android/local.properties
 
-    - name: Build Android (debug) with Flutter
-      run: flutter build apk --debug
-
-    - name: Verify APK exists
-      run: |
-        test -f build/app/outputs/flutter-apk/app-debug.apk
-        ls -lh build/app/outputs/flutter-apk/app-debug.apk
-
-    - name: Upload Debug APK artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: app-debug-apk
-        path: build/app/outputs/flutter-apk/app-debug.apk
-
-    - name: Build Android (release) with Flutter
+    - name: Build Android APK (release)
       run: flutter build apk --release
 
     - name: Verify release APK exists
